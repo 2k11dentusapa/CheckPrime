@@ -123,11 +123,7 @@
 
         // Ước tính thời gian (rất thô, dựa trên số chữ số)
         function estimateTime(digits) {
-            if (digits <= 6) return "dưới 1 giây";
-            if (digits <= 12) return "vài giây";
-            if (digits <= 18) return "10-30 giây";
-            if (digits <= 22) return "1-3 phút";
-            return "vài phút đến hơn 10 phút (có thể làm trình duyệt chậm)";
+            return `${Math.floor((sqrt(inputs))/7000000)+1} giây`
         }
 
         // Tính căn bậc hai BigInt
