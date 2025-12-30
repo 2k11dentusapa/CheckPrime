@@ -123,29 +123,19 @@
 
         // Ước tính thời gian (rất thô, dựa trên số chữ số)
         function estimateTime(digits) {
-            // Ước tính thời gian (thô, theo cách của bạn - dựa trên số chữ số)
-function estimateTime(digits) {
-    if (digits <= 1) return "dưới 1 giây";
-    
-    // Ước lượng số lần lặp ≈ sqrt(10^digits) / 3 
-    // vì ta duyệt i += 6, kiểm tra 2 lần mỗi vòng (i và i+2)
-    // sqrt(10^digits) = 10^(digits/2)
-    const approxIterations = Math.pow(10, digits / 2) / 3;
-    
-    // Giả sử máy tính thực hiện được khoảng 7-10 triệu phép chia BigInt mỗi giây
-    // (con số này mang tính tham khảo, tùy máy)
-    const operationsPerSecond = 7000000;
-    let seconds = approxIterations / operationsPerSecond;
-    
-    // Làm tròn lên và xử lý hiển thị đẹp
-    if (seconds < 1) return "dưới 1 giây";
-    if (seconds < 10) return `khoảng ${Math.ceil(seconds)} giây`;
-    if (seconds < 60) return `khoảng ${Math.floor(seconds)} giây`;
-    if (seconds < 3600) return `khoảng ${Math.floor(seconds / 60)} phút`;
-    
-    return `khoảng ${Math.floor(seconds / 3600)} giờ hoặc hơn`;
+    if (digits <= 12) return "dưới 1 giây";
+
+    // Ước lượng số lần lặp ≈ 10^(digits/2) / 3
+    const iterations = Math.pow(10, digits / 2) / 3;
+
+    // Chia cho 7 triệu như ý bạn, cộng 1 và làm tròn lên
+    const seconds = Math.floor(iterations / 7000000) + 1;
+
+    if (seconds < 60) return `${seconds} giây`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)} phút`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)} giờ`;
+    return `${Math.floor(seconds / 86400)} ngày hoặc hơn`;
 }
-        }
 
         // Tính căn bậc hai BigInt
         function sqrtBigInt(n) {
@@ -247,4 +237,5 @@ function estimateTime(digits) {
         }
     </script>
 </body>
+<!-- Code được grok viết-->
 </html>
