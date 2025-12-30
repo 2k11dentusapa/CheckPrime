@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kiểm tra số nguyên tố lớn (chia 6 chữ số)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        h1 { text-align: center; color: #343a40; }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .input-group {
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+        }
+        label {
+            width: 130px;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        input {
+            width: 200px;
+            padding: 12px;
+            font-size: 20px;
+            font-family: monospace;
+            text-align: center;
+            letter-spacing: 4px;
+        }
+        button {
+            padding: 14px 30px;
+            font-size: 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 30px auto;
+            display: block;
+        }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #6c757d; cursor: not-allowed; }
+        #fullNumber {
+            font-size: 28px;
+            font-family: monospace;
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 8px;
+            word-break: break-all;
+        }
+        #result {
+            margin-top: 30px;
+            font-size: 22px;
+            line-height: 2;
+            text-align: center;
+        }
+        .prime { color: #28a745; font-weight: bold; }
+        .not-prime { color: #dc3545; font-weight: bold; }
+        .divisor { color: #dc3545; font-size: 24px; }
+        .estimate { color: #856404; background: #fff3cd; padding: 10px; border-radius: 6px; margin: 15px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Kiểm tra số nguyên tố lớn<br><small>(Nhập theo từng đoạn 6 chữ số)</small></h1>
+
+        <div class="input-group">
+            <label>Phần 1:</label>
+            <input type="text" id="part1" maxlength="6" placeholder="000000">
+        </div>
+        <div class="input-group">
+            <label>Phần 2:</label>
+            <input type="text" id="part2" maxlength="6" placeholder="000000">
+        </div>
+        <div class="input-group">
+            <label>Phần 3:</label>
+            <input type="text" id="part3" maxlength="6" placeholder="000000">
+        </div>
+        <div class="input-group">
+            <label>Phần 4:</label>
+            <input type="text" id="part4" maxlength="6" placeholder="000000">
+        </div>
+
+        <div id="fullNumber"></div>
+
+        <button id="btn" onclick="kiemTra()">Kiểm tra số nguyên tố</button>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // Tự động cập nhật số đầy đủ khi nhập
+        const inputs = ['part1', 'part2', 'part3', 'part4'];
+        inputs.forEach(id => {
+            document.getElementById(id).addEventListener('input', updateFullNumber);
+        });
+
+        function updateFullNumber() {
+            let full = inputs.map(id => {
+                let val = document.getElementById(id).value.replace(/\D/g, '');
+                return val.padStart(6, '0').slice(-6);
+            }).join('');
+            
+            // Loại bỏ số 0 thừa ở đầu (trừ khi số là 0)
+            full = full.replace(/^0+/, '');
+            if (full === '') full = '0';
+
+            document.getElementById('fullNumber').textContent = 
+                full === '0' ? '0' : full;
+        }
+
+        // Ước tính thời gian (rất thô, dựa trên số chữ số)
+        function estimateTime(digits) {
+            if (digits <= 6) return "dưới 1 giây";
+            if (digits <= 12) return "vài giây";
+            if (digits <= 18) return "10-30 giây";
+            if (digits <= 22) return "1-3 phút";
+            return "vài phút đến hơn 10 phút (có thể làm trình duyệt chậm)";
+        }
+
+        // Tính căn bậc hai BigInt
+        function sqrtBigInt(n) {
+            if (n < 0n) throw "Negative";
+            if (n === 0n || n === 1n) return n;
+            let low = 1n, high = n, ans = 0n;
+            while (low <= high) {
+                let mid = (low + high) / 2n;
+                if (mid * mid <= n) {
+                    ans = mid;
+                    low = mid + 1n;
+                } else {
+                    high = mid - 1n;
+                }
+            }
+            return ans;
+        }
+
+        // Chia truyền thống, trả về ước số nhỏ nhất nếu không nguyên tố
+        function trialDivisionWithDivisor(n) {
+            if (n < 2n) return 0n; // không phải nguyên tố
+            if (n === 2n || n === 3n) return null; // nguyên tố
+            if (n % 2n === 0n) return 2n;
+            if (n % 3n === 0n) return 3n;
+
+            let i = 5n;
+            const sqrtN = sqrtBigInt(n);
+
+            while (i <= sqrtN) {
+                if (n % i === 0n) return i;
+                if (n % (i + 2n) === 0n) return i + 2n;
+                i += 6n;
+            }
+            return null; // nguyên tố
+        }
+
+        async function kiemTra() {
+            const btn = document.getElementById('btn');
+            btn.disabled = true;
+            btn.textContent = "Đang kiểm tra...";
+
+            let parts = inputs.map(id => {
+                let val = document.getElementById(id).value.trim();
+                if (!/^\d{0,6}$/.test(val)) {
+                    alert("Mỗi phần chỉ được nhập tối đa 6 chữ số!");
+                    btn.disabled = false;
+                    btn.textContent = "Kiểm tra số nguyên tố";
+                    return null;
+                }
+                return val.padStart(6, '0');
+            });
+
+            if (parts.includes(null)) return;
+
+            let fullStr = parts.join('').replace(/^0+/, '');
+            if (fullStr === '') fullStr = '0';
+            const n = BigInt(fullStr);
+            const digits = fullStr.length;
+
+            let resultHTML = `
+                <p>Số cần kiểm tra: <strong>${n}</strong> (${digits} chữ số)</p>
+                <div class="estimate">
+                    <strong>Thời gian xử lý ước tính:</strong> ${estimateTime(digits)}
+                </div>
+                <p>Đang kiểm tra bằng phương pháp chia truyền thống...</p>
+            `;
+
+            document.getElementById('result').innerHTML = resultHTML;
+
+            // Delay nhỏ để UI cập nhật
+            await new Promise(r => setTimeout(r, 100));
+
+            const startTime = performance.now();
+            const divisor = trialDivisionWithDivisor(n);
+            const endTime = performance.now();
+            const timeTaken = ((endTime - startTime) / 1000).toFixed(2);
+
+            if (divisor === null) {
+                resultHTML += `
+                    <p class="prime">→ Là số nguyên tố</p>
+                    <p>Thời gian thực tế: ${timeTaken} giây</p>
+                `;
+            } else if (divisor === 0n) {
+                resultHTML += `
+                    <p class="not-prime">→ Không phải số nguyên tố</p>
+                    <p>Thời gian thực tế: ${timeTaken} giây</p>
+                `;
+            } else {
+                resultHTML += `
+                    <p class="not-prime">→ Không phải số nguyên tố</p>
+                    <p class="divisor">Chia hết cho: ${divisor}</p>
+                    <p>Thời gian thực tế: ${timeTaken} giây</p>
+                `;
+            }
+
+            document.getElementById('result').innerHTML = resultHTML;
+            btn.disabled = false;
+            btn.textContent = "Kiểm tra số nguyên tố";
+        }
+    </script>
+</body>
+</html>
