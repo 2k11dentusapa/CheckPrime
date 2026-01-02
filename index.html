@@ -130,8 +130,6 @@ function estimateTime(digits) {
     if (seconds < 86400) return `${Math.floor(seconds / 3600)} giờ`;
     return `${Math.floor(seconds / 86400)} ngày hoặc hơn`;
 }
-
-/* ---------- sqrt BigInt ---------- */
 function sqrtBigInt(n) {
     if (n < 0n) return -1n;
     if (n < 2n) return n;
@@ -148,7 +146,7 @@ function isPerfectSquare(n) {
     return s * s === n;
 }
 
-/* ---------- Trial division: wheel 30 + lọc chính phương ---------- */
+/* ---------- Trial division: wheel 30 + lọc đúng ---------- */
 function trialDivisionWithDivisor(n) {
     if (n < 2n) return 0n;
     if (n === 2n || n === 3n || n === 5n) return null;
@@ -161,21 +159,43 @@ function trialDivisionWithDivisor(n) {
     // Lọc chính phương
     if (isPerfectSquare(n)) return sqrtBigInt(n);
 
-    // Lọc sqrt(n+1), sqrt(n+4)
-    if (isPerfectSquare(n + 1n)) return 1n;
-    if (isPerfectSquare(n + 4n)) return 2n;
+    // Heuristic: loại hợp số, KHÔNG sinh ước giả
+    if (isPerfectSquare(n + 1n)) return 0n;
+    if (isPerfectSquare(n + 4n)) return 0n;
+
+    // Lọc các prime nhỏ còn lại
+    const small = [7n, 11n, 13n, 17n, 19n, 23n, 29n];
+    for (const p of small) {
+        if (n === p) return null;
+        if (n % p === 0n) return p;
+    }
 
     const sqrtN = sqrtBigInt(n);
-    const steps = [1n, 7n, 11n, 13n, 17n, 19n, 23n, 29n];
 
-    let k = 0n;
+    // 8 nhánh wheel 30 (dịch pha đúng)
+    let d0 = 31n; // 30k + 1
+    let d1 = 37n; // 30k + 7
+    let d2 = 41n; // 30k + 11
+    let d3 = 43n; // 30k + 13
+    let d4 = 47n; // 30k + 17
+    let d5 = 53n; // 30k + 23
+    let d6 = 59n; // 30k + 29
+    let d7 = 79n; // 30k + 19 (đúng điểm khởi động)
+
     while (true) {
-        for (let s of steps) {
-            let d = 30n * k + s;
-            if (d > sqrtN) return null;
-            if (n % d === 0n) return d;
-        }
-        k++;
+        if (d0 > sqrtN) return null;
+
+        if (n % d0 === 0n) return d0;
+        if (n % d1 === 0n) return d1;
+        if (n % d2 === 0n) return d2;
+        if (n % d3 === 0n) return d3;
+        if (n % d4 === 0n) return d4;
+        if (n % d5 === 0n) return d5;
+        if (n % d6 === 0n) return d6;
+        if (n % d7 === 0n) return d7;
+
+        d0 += 30n; d1 += 30n; d2 += 30n; d3 += 30n;
+        d4 += 30n; d5 += 30n; d6 += 30n; d7 += 30n;
     }
 }
 
