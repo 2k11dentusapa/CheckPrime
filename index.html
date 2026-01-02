@@ -208,7 +208,7 @@ async function kiemTra() {
     await new Promise(r => setTimeout(r, 80));
 
     const t0 = performance.now();
-    const divisor = trialDivisionWithDivisor(n);
+    const divisor = trialDivisionWheel30(n);
     const t1 = performance.now();
     const timeTaken = ((t1 - t0) / 1000).toFixed(2);
 
