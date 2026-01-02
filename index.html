@@ -100,35 +100,30 @@
         <div id="result"></div>
     </div>
 
-    <script>
-        // Tự động cập nhật số đầy đủ khi nhập
-        const inputs = ['part1', 'part2', 'part3', 'part4'];
-        inputs.forEach(id => {
-            document.getElementById(id).addEventListener('input', updateFullNumber);
-        });
+</bo<script>
+/* ---------- UI ---------- */
+const inputs = ['part1', 'part2', 'part3', 'part4'];
+inputs.forEach(id => {
+    document.getElementById(id).addEventListener('input', updateFullNumber);
+});
 
-        function updateFullNumber() {
-            let full = inputs.map(id => {
-                let val = document.getElementById(id).value.replace(/\D/g, '');
-                return val.padStart(6, '0').slice(-6);
-            }).join('');
-            
-            // Loại bỏ số 0 thừa ở đầu (trừ khi số là 0)
-            full = full.replace(/^0+/, '');
-            if (full === '') full = '0';
+function updateFullNumber() {
+    let full = inputs.map(id => {
+        let val = document.getElementById(id).value.replace(/\D/g, '');
+        return val.padStart(6, '0').slice(-6);
+    }).join('');
 
-            document.getElementById('fullNumber').textContent = 
-                full === '0' ? '0' : full;
-        }
+    full = full.replace(/^0+/, '');
+    if (full === '') full = '0';
+    document.getElementById('fullNumber').textContent = full;
+}
 
-        // Ước tính thời gian (rất thô, dựa trên số chữ số)
-        function estimateTime(digits) {
+/* ---------- Ước tính thời gian (wheel 30, 7e6 vòng/s) ---------- */
+function estimateTime(digits) {
     if (digits <= 12) return "dưới 1 giây";
 
-    // Ước lượng số lần lặp ≈ 10^(digits/2) / 3
-    const iterations = Math.pow(10, digits / 2) / 3;
-
-    // Chia cho 7 triệu như ý bạn, cộng 1 và làm tròn lên
+    // Số phép thử ~ sqrt(n) * 8 / 30
+    const iterations = Math.pow(10, digits / 2) * (8 / 30);
     const seconds = Math.floor(iterations / 7000000) + 1;
 
     if (seconds < 60) return `${seconds} giây`;
@@ -137,105 +132,108 @@
     return `${Math.floor(seconds / 86400)} ngày hoặc hơn`;
 }
 
-        // Tính căn bậc hai BigInt
-        function sqrtBigInt(n) {
-            if (n < 0n) throw "Negative";
-            if (n === 0n || n === 1n) return n;
-            let low = 1n, high = n, ans = 0n;
-            while (low <= high) {
-                let mid = (low + high) / 2n;
-                if (mid * mid <= n) {
-                    ans = mid;
-                    low = mid + 1n;
-                } else {
-                    high = mid - 1n;
-                }
-            }
-            return ans;
+/* ---------- sqrt BigInt ---------- */
+function sqrtBigInt(n) {
+    if (n < 0n) return -1n;
+    if (n < 2n) return n;
+    let x0 = n, x1 = (x0 + 1n) >> 1n;
+    while (x1 < x0) {
+        x0 = x1;
+        x1 = (x1 + n / x1) >> 1n;
+    }
+    return x0;
+}
+
+function isPerfectSquare(n) {
+    const s = sqrtBigInt(n);
+    return s * s === n;
+}
+
+/* ---------- Trial division: wheel 30 + lọc chính phương ---------- */
+function trialDivisionWithDivisor(n) {
+    if (n < 2n) return 0n;
+    if (n === 2n || n === 3n || n === 5n) return null;
+
+    // Chia nhanh
+    if (n % 2n === 0n) return 2n;
+    if (n % 3n === 0n) return 3n;
+    if (n % 5n === 0n) return 5n;
+
+    // Lọc chính phương
+    if (isPerfectSquare(n)) return sqrtBigInt(n);
+
+    // Lọc sqrt(n+1), sqrt(n+4)
+    if (isPerfectSquare(n + 1n)) return 1n;
+    if (isPerfectSquare(n + 4n)) return 2n;
+
+    const sqrtN = sqrtBigInt(n);
+    const steps = [1n, 7n, 11n, 13n, 17n, 19n, 23n, 29n];
+
+    let k = 0n;
+    while (true) {
+        for (let s of steps) {
+            let d = 30n * k + s;
+            if (d > sqrtN) return null;
+            if (n % d === 0n) return d;
         }
+        k++;
+    }
+}
 
-        // Chia truyền thống, trả về ước số nhỏ nhất nếu không nguyên tố
-        function trialDivisionWithDivisor(n) {
-            if (n < 2n) return 0n; // không phải nguyên tố
-            if (n === 2n || n === 3n) return null; // nguyên tố
-            if (n % 2n === 0n) return 2n;
-            if (n % 3n === 0n) return 3n;
+/* ---------- Main ---------- */
+async function kiemTra() {
+    const btn = document.getElementById('btn');
+    btn.disabled = true;
+    btn.textContent = "Đang kiểm tra...";
 
-            let i = 5n;
-            const sqrtN = sqrtBigInt(n);
-
-            while (i <= sqrtN) {
-                if (n % i === 0n) return i;
-                if (n % (i + 2n) === 0n) return i + 2n;
-                i += 6n;
-            }
-            return null; // nguyên tố
+    let parts = inputs.map(id => {
+        let val = document.getElementById(id).value.trim();
+        if (!/^\d{0,6}$/.test(val)) {
+            alert("Mỗi phần chỉ được nhập tối đa 6 chữ số!");
+            return null;
         }
+        return val.padStart(6, '0');
+    });
+    if (parts.includes(null)) return;
 
-        async function kiemTra() {
-            const btn = document.getElementById('btn');
-            btn.disabled = true;
-            btn.textContent = "Đang kiểm tra...";
+    let fullStr = parts.join('').replace(/^0+/, '');
+    if (fullStr === '') fullStr = '0';
+    const n = BigInt(fullStr);
+    const digits = fullStr.length;
 
-            let parts = inputs.map(id => {
-                let val = document.getElementById(id).value.trim();
-                if (!/^\d{0,6}$/.test(val)) {
-                    alert("Mỗi phần chỉ được nhập tối đa 6 chữ số!");
-                    btn.disabled = false;
-                    btn.textContent = "Kiểm tra số nguyên tố";
-                    return null;
-                }
-                return val.padStart(6, '0');
-            });
+    document.getElementById('result').innerHTML = `
+        <p>Số cần kiểm tra: <strong>${n}</strong> (${digits} chữ số)</p>
+        <div class="estimate">
+            <strong>Thời gian xử lý ước tính:</strong> ${estimateTime(digits)}
+        </div>
+        <p>Đang kiểm tra (wheel 30 + lọc chính phương)...</p>
+    `;
 
-            if (parts.includes(null)) return;
+    await new Promise(r => setTimeout(r, 80));
 
-            let fullStr = parts.join('').replace(/^0+/, '');
-            if (fullStr === '') fullStr = '0';
-            const n = BigInt(fullStr);
-            const digits = fullStr.length;
+    const t0 = performance.now();
+    const divisor = trialDivisionWithDivisor(n);
+    const t1 = performance.now();
+    const timeTaken = ((t1 - t0) / 1000).toFixed(2);
 
-            let resultHTML = `
-                <p>Số cần kiểm tra: <strong>${n}</strong> (${digits} chữ số)</p>
-                <div class="estimate">
-                    <strong>Thời gian xử lý ước tính:</strong> ${estimateTime(digits)}
-                </div>
-                <p>Đang kiểm tra bằng phương pháp chia truyền thống...</p>
-            `;
+    let html = '';
+    if (divisor === null) {
+        html = `<p class="prime">→ Là số nguyên tố</p>`;
+    } else if (divisor === 0n) {
+        html = `<p class="not-prime">→ Không phải số nguyên tố</p>`;
+    } else {
+        html = `
+            <p class="not-prime">→ Không phải số nguyên tố</p>
+            <p class="divisor">Chia hết cho: ${divisor}</p>
+        `;
+    }
+    html += `<p>Thời gian thực tế: ${timeTaken} giây</p>`;
+    document.getElementById('result').innerHTML += html;
 
-            document.getElementById('result').innerHTML = resultHTML;
-
-            // Delay nhỏ để UI cập nhật
-            await new Promise(r => setTimeout(r, 100));
-
-            const startTime = performance.now();
-            const divisor = trialDivisionWithDivisor(n);
-            const endTime = performance.now();
-            const timeTaken = ((endTime - startTime) / 1000).toFixed(2);
-
-            if (divisor === null) {
-                resultHTML += `
-                    <p class="prime">→ Là số nguyên tố</p>
-                    <p>Thời gian thực tế: ${timeTaken} giây</p>
-                `;
-            } else if (divisor === 0n) {
-                resultHTML += `
-                    <p class="not-prime">→ Không phải số nguyên tố</p>
-                    <p>Thời gian thực tế: ${timeTaken} giây</p>
-                `;
-            } else {
-                resultHTML += `
-                    <p class="not-prime">→ Không phải số nguyên tố</p>
-                    <p class="divisor">Chia hết cho: ${divisor}</p>
-                    <p>Thời gian thực tế: ${timeTaken} giây</p>
-                `;
-            }
-
-            document.getElementById('result').innerHTML = resultHTML;
-            btn.disabled = false;
-            btn.textContent = "Kiểm tra số nguyên tố";
-        }
-    </script>
-</body>
+    btn.disabled = false;
+    btn.textContent = "Kiểm tra số nguyên tố";
+}
+</script>
+dy>
 <!-- Code được grok viết-->
 </html>
