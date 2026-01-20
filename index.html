@@ -75,7 +75,6 @@
 <body>
     <div class="container">
         <h1>Kiểm tra số nguyên tố lớn<br><small>(Nhập theo từng đoạn 6 chữ số)</small></h1>
-
         <div class="input-group">
             <label>Phần 1:</label>
             <input type="text" id="part1" maxlength="6" placeholder="000000">
@@ -92,11 +91,8 @@
             <label>Phần 4:</label>
             <input type="text" id="part4" maxlength="6" placeholder="000000">
         </div>
-
         <div id="fullNumber"></div>
-
         <button id="btn" onclick="kiemTra()">Kiểm tra số nguyên tố</button>
-
         <div id="result"></div>
     </div>
    <script>
@@ -105,18 +101,15 @@ const inputs = ['part1', 'part2', 'part3', 'part4'];
 inputs.forEach(id => {
     document.getElementById(id).addEventListener('input', updateFullNumber);
 });
-
 function updateFullNumber() {
     let full = inputs.map(id => {
         let val = document.getElementById(id).value.replace(/\D/g, '');
         return val.padStart(6, '0').slice(-6);
     }).join('');
-
     full = full.replace(/^0+/, '');
     if (full === '') full = '0';
     document.getElementById('fullNumber').textContent = full;
 }
-
 /* ---------- Ước tính thời gian ---------- */
 function estimateTime(digits) {
     if (digits <= 12) return "dưới 1 giây";
@@ -128,7 +121,6 @@ function estimateTime(digits) {
     if (seconds < 86400) return `${Math.floor(seconds / 3600)} giờ`;
     return `${Math.floor(seconds / 86400)} ngày hoặc hơn`;
 }
-
 /* ---------- sqrt BigInt ---------- */
 function sqrtBigInt(n) {
     if (n < 0n) return -1n;
@@ -140,7 +132,6 @@ function sqrtBigInt(n) {
     }
     return x0;
 }
-
 /* ---------- kiểm tra chính phương ---------- */
 function isPerfectSquareHybrid(n) {
     if (typeof n === "number") {
@@ -151,8 +142,7 @@ function isPerfectSquareHybrid(n) {
         return s * s === n;
     }
 }
-
-/* ---------- TRIAL DIVISION WHEEL 30 (HYBRID) - ĐÃ SỬA HOÀN CHỈNH ---------- */
+/* ---------- TRIAL DIVISION WHEEL 30 ---------- */
 function trialDivisionWheel30(n) {
     /* ===== Number ===== */
     if (typeof n === "number") {
@@ -161,7 +151,6 @@ function trialDivisionWheel30(n) {
         if (n % 2 === 0) return 2;
         if (n % 3 === 0) return 3;
         if (n % 5 === 0) return 5;
-
         for (let d = 7; d * d <= n; d += 30) {
             if (n % d === 0) return d;
             if (n % (d + 4) === 0) return d + 4;
@@ -172,17 +161,14 @@ function trialDivisionWheel30(n) {
             if (n % (d + 22) === 0) return d + 22;
             if (n % (d + 24) === 0) return d + 24;
         }
-        return null; // Đảm bảo luôn return null nếu nguyên tố
+        return null;
     }
-
     /* ===== BigInt ===== */
     if (n < 2n) return 0n;
-
     if (n === 2n || n === 3n || n === 5n) return null;
     if (n % 2n === 0n) return 2n;
     if (n % 3n === 0n) return 3n;
     if (n % 5n === 0n) return 5n;
-
     for (let d = 7n; d * d <= n; d += 30n) {
         if (n % d === 0n) return d;
         if (n % (d + 4n) === 0n) return d + 4n;
@@ -193,16 +179,13 @@ function trialDivisionWheel30(n) {
         if (n % (d + 22n) === 0n) return d + 22n;
         if (n % (d + 24n) === 0n) return d + 24n;
     }
-
-    return null; // Đảm bảo luôn return null nếu nguyên tố
+    return null;
 }
-
 /* ---------- MAIN ---------- */
 async function kiemTra() {
     const btn = document.getElementById('btn');
     btn.disabled = true;
     btn.textContent = "Đang kiểm tra...";
-
     try {
         let parts = inputs.map(id => {
             let val = document.getElementById(id).value.trim();
@@ -214,21 +197,18 @@ async function kiemTra() {
         });
         if (parts.includes(null)) {
             btn.disabled = false;
-            btn.textContent = "Kiểm tra số nguyên tố";
+            btn.textContent = "Kiểm tra";
             return;
         }
-
         let fullStr = parts.join('').replace(/^0+/, '');
         if (fullStr === '') fullStr = '0';
         const digits = fullStr.length;
-
         let n;
         if (digits < 16) {
             n = Number(fullStr);
         } else {
             n = BigInt(fullStr);
         }
-
         document.getElementById('result').innerHTML = `
             <p>Số cần kiểm tra: <strong>${fullStr}</strong> (${digits} chữ số)</p>
             <div class="estimate">
@@ -236,11 +216,8 @@ async function kiemTra() {
             </div>
             <p>Đang kiểm tra...</p>
         `;
-
         await new Promise(r => setTimeout(r, 50));
-
         const t0 = performance.now();
-
         // XỬ LÝ ĐẶC BIỆT CHO CÁC SỐ NHỎ ĐỂ TRÁNH LỖI
         if (typeof n === "number") {
             if (n === 2 || n === 3 || n === 5) {
@@ -293,11 +270,8 @@ async function kiemTra() {
                 return;
             }
         }
-
-        // Lọc chính phương n, n+1, n+4
         const n1 = typeof n === "number" ? n + 1 : n + 1n;
         const n4 = typeof n === "number" ? n + 4 : n + 4n;
-
         if (isPerfectSquareHybrid(n)) {
             const t1 = performance.now();
             const timeTaken = ((t1 - t0) / 1000).toFixed(2);
@@ -334,13 +308,9 @@ async function kiemTra() {
             btn.textContent = "Kiểm tra số nguyên tố";
             return;
         }
-
-        // Trial division
         const divisor = trialDivisionWheel30(n);
-
         const t1 = performance.now();
         const timeTaken = ((t1 - t0) / 1000).toFixed(2);
-
         let html = '';
         if (divisor === null) {
             html = `<p class="prime">→ Là số nguyên tố</p>`;
@@ -352,7 +322,6 @@ async function kiemTra() {
         }
         html += `<p>Thời gian thực tế: ${timeTaken} giây</p>`;
         document.getElementById('result').innerHTML += html;
-
     } catch (err) {
         console.error(err);
         document.getElementById('result').innerHTML += `
@@ -365,5 +334,4 @@ async function kiemTra() {
 }
 </script> 
 </body>
-<!-- Code được grok viết-->
 </html>
